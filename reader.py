@@ -9,16 +9,26 @@ def main():
     with open(FILE_NAME, "r") as file:
         restaurants = json.load(file)
 
-    inserts = [generate_sql_insert(r) for r in restaurants]
+    inserts = []
+    i = 0
+    for r in restaurants:
+        insert = generate_sql_insert(r, i)
+
+        if (insert is not None):
+            inserts.append(insert)
+            i += 1
+            #print(i, r)
+        else:
+            print("Invalid!", r)
 
     # write to file
     with open('restaurant_inserts.txt', 'w') as f:
         for item in inserts:
             f.write("%s" % item)
 
-def generate_sql_insert(restaurant):
+def generate_sql_insert(restaurant, override_id):
     if (not restaurant['name'].isascii()):
-        return ""
+        return None
 
     output = "INSERT INTO Restaurant "
     cols = [
@@ -36,7 +46,7 @@ def generate_sql_insert(restaurant):
     restaurant["closing"] = convert_time(restaurant["closing"]) if restaurant["closing"] is not None else convert_time(DUMMY_CLOSE)
 
     vals = [
-        str(restaurant["id"]),
+        str(override_id),
         quote(restaurant["address"]),
         quote(restaurant["name"]),
         quote(restaurant["phone"]),
