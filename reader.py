@@ -1,8 +1,22 @@
 import json
+import random
 
 from scraper import DUMMY_OPEN, DUMMY_CLOSE
 
 FILE_NAME = 'restaurants.json'
+CUISINES = [
+    "American",
+    "Chinese",
+    "French",
+    "Indian",
+    "Italian",
+    "Japanese",
+    "Korean",
+    "Mediterranean",
+    "Mexican",
+    "Thai",
+    "Other"
+]
 
 
 def main():
@@ -17,9 +31,6 @@ def main():
         if (insert is not None):
             inserts.append(insert)
             i += 1
-            #print(i, r)
-        else:
-            print("Invalid!", r)
 
     # write to file
     with open('restaurant_inserts.txt', 'w') as f:
@@ -45,12 +56,15 @@ def generate_sql_insert(restaurant, override_id):
     restaurant["opening"] = convert_time(restaurant["opening"]) if restaurant["opening"] is not None else convert_time(DUMMY_OPEN)
     restaurant["closing"] = convert_time(restaurant["closing"]) if restaurant["closing"] is not None else convert_time(DUMMY_CLOSE)
 
+    # get cuisine
+    cuisine = generate_cuisine(restaurant["name"])
+
     vals = [
         str(override_id),
         quote(restaurant["address"]),
         quote(restaurant["name"]),
         quote(restaurant["phone"]),
-        "NULL",
+        quote(cuisine),
         quote(restaurant["opening"]),
         quote(restaurant["closing"]),
     ]
@@ -60,6 +74,18 @@ def generate_sql_insert(restaurant, override_id):
     output += " VALUES ({});\n".format(", ".join(vals))
 
     return output
+
+def generate_cuisine(name):
+    cuisines = [x.lower() for x in CUISINES] 
+    name =  name.lower()
+    # check if restaurant name contains a valid cuisine
+    for cuisine in cuisines:
+        if (cuisine in name):
+            print("Cuisine match! ", cuisine, " - ", name)
+            return cuisine.capitalize()
+    
+    # else, randomly pick one
+    return random.choice(CUISINES)
 
 def convert_time(time):
     return "{}:{}".format(time[:2], time[2:])
